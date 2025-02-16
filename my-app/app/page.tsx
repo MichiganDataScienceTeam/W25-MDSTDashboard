@@ -1,7 +1,9 @@
-"use client"
+"use client";
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Bell, Calendar, Layout, Users, Settings } from "lucide-react"
+import { createClient } from "@/utils/supabase/client";
+
 
 export default function MDSTDashboard() {
   const [activeTab, setActiveTab] = useState("member")
@@ -221,6 +223,14 @@ function EBoardView() {
           <OrganizationOverview />
         </div>
       </div>
+
+      <div>
+        <h3 className="text-lg font-semibold mb-4">Projects List</h3>
+        <div className="p-4 bg-neutral-800 rounded-lg border border-neutral-700">
+          <ProjectsList />
+        </div>
+      </div>
+      
     </section>
   )
 }
@@ -329,6 +339,7 @@ function TeamOverview() {
  * ORGANIZATION OVERVIEW TABLE
  * ----------------------------------------------------------------*/
 function OrganizationOverview() {
+
   const projects = [
     { name: "MDST Dashboard", members: 10, progress: 75 },
     { name: "Data Viz", members: 8, progress: 60 },
@@ -372,3 +383,56 @@ function OrganizationOverview() {
     </div>
   )
 }
+
+interface Project {
+  id: number;
+  project_name: string;
+  num_participants: number;
+}
+
+function ProjectsList() {
+  const [projects, setProjects] = useState<Project[]>([]);
+
+  // useEffect(() => {
+    console.log("useEffect triggered"); // Debug point 1
+
+    async function fetchProjects() {
+      console.log("fetchProjects started"); // Debug point 2
+      try {
+        const supabase = await createClient();
+        console.log("Supabase client created"); // Debug point 3
+        
+        const { data, error } = await supabase.from("Projects").select("*");
+        console.log("Query executed"); // Debug point 4
+
+        if (error) {
+          console.error("Error fetching projects:", error);
+        } else {
+          console.log("Raw data:", data); // Debug point 5
+          setProjects(data as Project[]);
+        }
+      } catch (e) {
+        console.error("Caught error:", e); // Debug point 6
+      }
+    }
+
+    fetchProjects();
+  // }, []);
+
+  console.log("Current projects state:", projects); // Debug point 7
+
+  return (
+    <div>
+      <h2>Projects</h2>
+      <ul>
+        {projects?.length === 0 && <p>No projects found</p>}
+        {projects?.map((project) => (
+          <li key={project.id}>
+            {project.project_name} - {project.num_participants} members
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
