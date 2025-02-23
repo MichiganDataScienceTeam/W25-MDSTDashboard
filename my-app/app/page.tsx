@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { Bell, Calendar, Layout, Users, Settings } from "lucide-react"
 import { createClient } from "@/utils/supabase/client";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 
 import ProjectView from "./project-view";
@@ -19,7 +20,7 @@ export default function MDSTDashboard() {
           {/* Left: Logo + Title */}
           <div className="flex items-center space-x-3">
             <img
-              // src="/mdst-logo.png"
+               src="/mdst-logo.png"
               alt="MDST Logo"
               className="h-8 w-auto"
             />
@@ -51,6 +52,8 @@ export default function MDSTDashboard() {
           </div>
         </div>
       </header>
+
+
 
       {/* MAIN CONTENT */}
       <main className="max-w-7xl mx-auto w-full flex-1 px-4 sm:px-6 lg:px-8 py-8">
@@ -96,10 +99,75 @@ export default function MDSTDashboard() {
     <div>
       <ProjectView />
     </div>
+      <div> <ProjectDropdown/></div>
       </main>
     </div>
   )
 }
+
+interface Project {
+  id: number;
+  project_name: string;
+  num_participants: number;
+}
+
+function ProjectDropdown() {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [selectedProject, setSelectedProject] = useState<string>("")
+
+  // useEffect(() => {
+    console.log("useEffect triggered"); // Debug point 1
+
+    async function fetchProjects() {
+      console.log("fetchProjects started"); // Debug point 2
+      try {
+        const supabase = await createClient();
+        console.log("Supabase client created"); // Debug point 3
+        
+        const { data, error } = await supabase.from("Projects").select("*");
+        console.log("Query executed"); // Debug point 4
+
+        if (error) {
+          console.error("Error fetching projects:", error);
+        } else {
+          console.log("Raw data:", data); // Debug point 5
+          setProjects(data as Project[]);
+        }
+      } catch (e) {
+        console.error("Caught error:", e); // Debug point 6
+      }
+    }
+
+    fetchProjects();
+  // }, []);
+
+  console.log("Current projects state:", projects); // Debug point 7
+
+  return (
+    <div className="space-y-8">
+        {/* Project Selector */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-gray-300">Select Project</label>
+          <Select value={selectedProject} onValueChange={setSelectedProject}>
+            <SelectTrigger className="w-[180px] bg-neutral-700 border-neutral-600 text-gray-200">
+              <SelectValue placeholder="Select Project" />
+            </SelectTrigger>
+            <SelectContent className="bg-neutral-800 border-neutral-700">
+              {projects?.map((project) => (
+                <SelectItem
+                  key={project.id}
+                  value={project.project_name}
+                  className="text-gray-200 focus:bg-neutral-700 focus:text-gray-200"
+                >
+                  {project.project_name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          </div>
+        </div>
+        );
+      }
 
 /* ------------------------------------------------------------------
  * TAB BUTTON
