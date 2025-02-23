@@ -4,12 +4,18 @@ import { useEffect, useState } from "react"
 import { Bell, Calendar, Layout, Users, Settings } from "lucide-react"
 import { createClient } from "@/utils/supabase/client";
 
-
 import ProjectView from "./project-view";
-
 
 export default function MDSTDashboard() {
   const [activeTab, setActiveTab] = useState("member")
+  
+  // Track which project is selected; empty string = no project (show home)
+  const [selectedProject, setSelectedProject] = useState("");
+
+  // Handler for dropdown change
+  const handleProjectChange = (event) => {
+    setSelectedProject(event.target.value);
+  };
 
   return (
     <div className="bg-neutral-900 text-gray-100 min-h-screen flex flex-col">
@@ -55,47 +61,80 @@ export default function MDSTDashboard() {
       {/* MAIN CONTENT */}
       <main className="max-w-7xl mx-auto w-full flex-1 px-4 sm:px-6 lg:px-8 py-8">
         {/* DASHBOARD HEADING */}
-        <div className="mb-8">
+        <div className="mb-8 flex items-center justify-between">
           <h1 className="text-3xl font-bold">Dashboard</h1>
+
+          {/* PROJECT SWITCHER DROPDOWN (UPDATED: All DB project names) */}
+          <div className="flex items-center space-x-2">
+            <label htmlFor="project-switcher" className="text-sm">
+              Select Project:
+            </label>
+            <select
+              id="project-switcher"
+              value={selectedProject}
+              onChange={handleProjectChange}
+              className="bg-neutral-800 text-gray-100 p-2 rounded"
+            >
+              <option value="">Home View</option>
+              <option value="Fruit Nutrition Information App">Fruit Nutrition Information App</option>
+              <option value="Mini AlphaGo">Mini AlphaGo</option>
+              <option value="Image Style Transfer">Image Style Transfer</option>
+              <option value="Breast Cancer Detection">Breast Cancer Detection</option>
+              <option value="Minecraft Clip Summarizer">Minecraft Clip Summarizer</option>
+              <option value="Election Voting Analysis">Election Voting Analysis</option>
+              <option value="JARVIS">JARVIS</option>
+              <option value="MDST Dashboard">MDST Dashboard</option>
+              <option value="Building & Breaking a Resume Screener">Building & Breaking a Resume Screener</option>
+              <option value="Traffic Accident Prediction">Traffic Accident Prediction</option>
+              <option value="Car brand Classification">Car brand Classification</option>
+              <option value="LLM App Development">LLM App Development</option>
+              <option value="Criminal Risk Analysis">Criminal Risk Analysis</option>
+              <option value="Flight Price Prediction">Flight Price Prediction</option>
+            </select>
+          </div>
         </div>
 
-        {/* TAB CONTROLS */}
-        <div className="flex space-x-4 mb-6">
-          <TabButton
-            active={activeTab === "member"}
-            onClick={() => setActiveTab("member")}
-          >
-            Member View
-          </TabButton>
-          <TabButton
-            active={activeTab === "lead"}
-            onClick={() => setActiveTab("lead")}
-          >
-            Project Lead View
-          </TabButton>
-          <TabButton
-            active={activeTab === "eboard"}
-            onClick={() => setActiveTab("eboard")}
-          >
-            E-Board View
-          </TabButton>
-        </div>
+        {/* RENDER HOME VIEW OR PROJECT VIEW */}
+        {selectedProject === "" ? (
+          <>
+            {/* TAB CONTROLS */}
+            <div className="flex space-x-4 mb-6">
+              <TabButton
+                active={activeTab === "member"}
+                onClick={() => setActiveTab("member")}
+              >
+                Member View
+              </TabButton>
+              <TabButton
+                active={activeTab === "lead"}
+                onClick={() => setActiveTab("lead")}
+              >
+                Project Lead View
+              </TabButton>
+              <TabButton
+                active={activeTab === "eboard"}
+                onClick={() => setActiveTab("eboard")}
+              >
+                E-Board View
+              </TabButton>
+            </div>
 
-        {/* TAB CONTENT */}
-        <div className="space-y-8">
-          {activeTab === "member" && (
-            <MemberView />
-          )}
-          {activeTab === "lead" && (
-            <LeadView />
-          )}
-          {activeTab === "eboard" && (
-            <EBoardView />
-          )}
-        </div>
-    <div>
-      <ProjectView />
-    </div>
+            {/* TAB CONTENT */}
+            <div className="space-y-8">
+              {activeTab === "member" && (
+                <MemberView />
+              )}
+              {activeTab === "lead" && (
+                <LeadView />
+              )}
+              {activeTab === "eboard" && (
+                <EBoardView />
+              )}
+            </div>
+          </>
+        ) : (
+          <ProjectView selectedProject={selectedProject} />
+        )}
       </main>
     </div>
   )
@@ -236,7 +275,6 @@ function EBoardView() {
           <ProjectsList />
         </div>
       </div>
-      
     </section>
   )
 }
@@ -347,7 +385,7 @@ function TeamOverview() {
 function OrganizationOverview() {
 
   const projects = [
-    { name: "MDST Dashboard", members: 10, progress: 75 },
+    { name: "MDST Dashboard", members: 9, progress: 75 },
     { name: "Data Viz", members: 8, progress: 60 },
     { name: "ML Model", members: 12, progress: 80 },
     { name: "NLP Project", members: 9, progress: 50 },
@@ -441,4 +479,3 @@ function ProjectsList() {
     </div>
   );
 }
-
