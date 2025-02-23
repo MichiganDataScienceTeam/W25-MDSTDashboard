@@ -5,6 +5,9 @@ import { Bell, Calendar, Layout, Users, Settings } from "lucide-react"
 import { createClient } from "@/utils/supabase/client";
 
 
+import ProjectView from "./project-view";
+
+
 export default function MDSTDashboard() {
   const [activeTab, setActiveTab] = useState("member")
 
@@ -90,6 +93,9 @@ export default function MDSTDashboard() {
             <EBoardView />
           )}
         </div>
+    <div>
+      <ProjectView />
+    </div>
       </main>
     </div>
   )
