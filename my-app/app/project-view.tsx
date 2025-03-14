@@ -135,39 +135,6 @@ export default function ProjectView({ selectedProject }: { selectedProject: stri
   // 4) --- Render ---
   return (
     <div className="bg-neutral-900 text-gray-100 min-h-screen flex flex-col">
-      {/* TOP BAR (Minimal) */}
-      <header className="bg-gradient-to-r from-blue-700 to-indigo-700 shadow-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          {/* Left: Logo + Title */}
-          <div className="flex items-center space-x-3">
-            <img src="/placeholder.svg?height=32&width=32" alt="MDST Logo" className="h-8 w-auto" />
-            <span className="text-xl font-bold tracking-wide text-white">MDST Dashboard</span>
-          </div>
-
-          {/* Right: Icons */}
-          <div className="flex items-center space-x-4">
-            <button
-              type="button"
-              className="rounded-full p-1 text-gray-200 hover:text-white transition-colors"
-              title="Notifications"
-            >
-              <Bell className="h-6 w-6" />
-            </button>
-            <button
-              type="button"
-              className="rounded-full w-8 h-8 overflow-hidden bg-gray-800 hover:ring-2 hover:ring-white"
-              title="User Menu"
-            >
-              <img
-                src="/placeholder.svg?height=32&width=32"
-                alt="User Avatar"
-                className="object-cover w-full h-full"
-              />
-            </button>
-          </div>
-        </div>
-      </header>
-
       {/* MAIN CONTENT */}
       <main className="max-w-7xl mx-auto w-full flex-1 px-4 sm:px-6 lg:px-8 py-8">
         <div className="space-y-6">
@@ -218,14 +185,14 @@ export default function ProjectView({ selectedProject }: { selectedProject: stri
                   Project Resources
                 </h3>
                 <div className="space-y-2">
-                  <a href="#" className="block text-blue-400 hover:text-blue-300 transition-colors">
+                  <a href="https://github.com/MichiganDataScienceTeam/W25-MDSTDashboard" className="block text-blue-400 hover:text-blue-300 transition-colors">
                     GitHub Repository
                   </a>
-                  <a href="#" className="block text-blue-400 hover:text-blue-300 transition-colors">
-                    Project Documentation
+                  <a href="https://drive.google.com/drive/folders/1sPjjBTP57PBuo0R5UiaK2dD0Ypj8zmYj?usp=drive_link" className="block text-blue-400 hover:text-blue-300 transition-colors">
+                    Google Drive
                   </a>
                   <a href="#" className="block text-blue-400 hover:text-blue-300 transition-colors">
-                    Design Files
+                    Project Demo
                   </a>
                 </div>
               </div>
