@@ -25,7 +25,7 @@ export default function MDSTDashboard() {
           {/* Left: Logo + Title */}
           <div className="flex items-center space-x-3">
             <img
-              // src="/mdst-logo.png"
+              src="/mdst-logo.png"
               alt="MDST Logo"
               className="h-8 w-auto"
             />
