@@ -5,20 +5,31 @@ import { Bell, Calendar, Layout, Users, Settings } from "lucide-react"
 import { createClient } from "@/utils/supabase/client";
 
 import ProjectView from "./project-view";
+import OneTapComponent from "@/components/ui/sign_in";
 
 export default function MDSTDashboard() {
   const [activeTab, setActiveTab] = useState("member")
   
   // Track which project is selected; empty string = no project (show home)
   const [selectedProject, setSelectedProject] = useState("");
+  const [showOneTap, setShowOneTap] = useState(false)
 
   // Handler for dropdown change
   const handleProjectChange = (event) => {
     setSelectedProject(event.target.value);
   };
 
+  // sign in handler
+  // async function handleSignInWithGoogle(response) {
+  //   const { data, error } = await supabase.auth.signInWithIdToken({
+  //     provider: 'google',
+  //     token: response.credential,
+  //   })
+  // }
+
   return (
     <div className="bg-neutral-900 text-gray-100 min-h-screen flex flex-col">
+      <script src="https://accounts.google.com/gsi/client" async></script>
       {/* TOP BAR (Minimal) */}
       <header className="bg-gradient-to-r from-blue-700 to-indigo-700 shadow-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -45,8 +56,10 @@ export default function MDSTDashboard() {
             </button>
             <button
               type="button"
+              onClick={() => setShowOneTap(true)}
               className="rounded-full w-8 h-8 overflow-hidden bg-gray-800 hover:ring-2 hover:ring-white"
               title="User Menu"
+
             >
               <img
                 src="/placeholder-user.jpg"
@@ -54,6 +67,7 @@ export default function MDSTDashboard() {
                 className="object-cover w-full h-full"
               />
             </button>
+            {showOneTap && <OneTapComponent/>}
           </div>
         </div>
       </header>
