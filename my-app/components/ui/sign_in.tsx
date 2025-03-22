@@ -79,7 +79,7 @@ const OneTapComponent = () => {
       <div id="oneTap" className="fixed top-0 right-0 z-[100]" />
       <div
         id="g_id_onload"
-        data-client_id="<client ID>"
+        data-client_id="236721807760-2m9ticpja93epum4fq6kafev4qebjhc3.apps.googleusercontent.com"
         data-context="signin"
         data-ux_mode="popup"
         data-callback="handleSignInWithGoogle"
