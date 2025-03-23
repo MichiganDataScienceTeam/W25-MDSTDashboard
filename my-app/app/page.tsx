@@ -16,6 +16,19 @@ export default function MDSTDashboard() {
   // Add state for user data
   const [userData, setUserData] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false)
+  
+  // Default profile image
+  const defaultProfileImage = "https://media.istockphoto.com/id/1495088043/vector/user-profile-icon-avatar-or-person-icon-profile-picture-portrait-symbol-default-portrait.jpg?s=612x612&w=0&k=20&c=dhV2p1JwmloBTOaGAtaA3AW1KSnjsdMt7-U_3EZElZ0=";
+  
+  // Function to handle sign out
+  const handleSignOut = async () => {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    setUserData(null)
+    setShowOneTap(false)
+    setProfileMenuOpen(false)
+  }
 
   // Add useEffect to check session and fetch user data
   useEffect(() => {
@@ -43,7 +56,19 @@ export default function MDSTDashboard() {
         if (userError) {
           console.error('Error fetching user info:', userError)
         } else {
-          setUserData(userInfo)
+          // Get the Google photo URL from provider details if available
+          const googlePhotoURL = session.user?.user_metadata?.avatar_url || null
+          
+          // Use profileUrl from database or fall back to Google photo or default
+          const profileUrl = userInfo.profileUrl || googlePhotoURL || defaultProfileImage
+          
+          // Combine Supabase user data with authentication metadata
+          setUserData({
+            ...userInfo,
+            email: session.user.email,
+            photoURL: googlePhotoURL,
+            profileUrl: profileUrl
+          })
         }
       } else {
         console.log('No active session')
@@ -63,7 +88,7 @@ export default function MDSTDashboard() {
   return (
     <div className="bg-neutral-900 text-gray-100 min-h-screen flex flex-col">
       <script src="https://accounts.google.com/gsi/client" async></script>
-      {/* TOP BAR (Minimal) */}
+      {/* TOP BAR (Improved) */}
       <header className="bg-gradient-to-r from-blue-700 to-indigo-700 shadow-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           {/* Left: Logo + Title */}
@@ -78,27 +103,85 @@ export default function MDSTDashboard() {
             </span>
           </div>
 
-          {/* Right: Icons */}
+          {/* Right: Auth Status + Icons */}
           <div className="flex items-center space-x-4">
-            <button
-              type="button"
-              className="rounded-full p-1 text-gray-200 hover:text-white transition-colors"
-              title="Notifications"
-            >
-              <Bell className="h-6 w-6" />
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowOneTap(true)}
-              className="rounded-full w-8 h-8 overflow-hidden bg-gray-800 hover:ring-2 hover:ring-white"
-              title="User Menu"
-            >
-              <img
-                src="/placeholder-user.jpg"
-                alt="User Avatar"
-                className="object-cover w-full h-full"
-              />
-            </button>
+            {userData ? (
+              /* User is logged in */
+              <>
+                <span className="text-sm text-gray-200">
+                  Signed in with Google
+                </span>
+                <button
+                  type="button"
+                  className="rounded-full p-1 text-gray-200 hover:text-white transition-colors"
+                  title="Notifications"
+                >
+                  <Bell className="h-6 w-6" />
+                </button>
+                <div className="relative">
+                  <button
+                    type="button"
+                    className="rounded-full w-8 h-8 overflow-hidden bg-gray-800 hover:ring-2 hover:ring-white focus:outline-none focus:ring-2 focus:ring-white"
+                    title={`${userData.First} ${userData.Last}`}
+                    onClick={() => setProfileMenuOpen(!profileMenuOpen)}
+                  >
+                    {userData.profileUrl ? (
+                      <img
+                        src={userData.profileUrl}
+                        alt="User Avatar"
+                        className="object-cover w-full h-full"
+                        onError={(e) => {
+                          console.log("Image failed to load, falling back to default");
+                          e.target.onerror = null;
+                          e.target.src = defaultProfileImage;
+                        }}
+                      />
+                    ) : (
+                      <div className="flex items-center justify-center h-full w-full bg-indigo-600 text-white font-medium text-sm">
+                        {userData.First?.charAt(0)}{userData.Last?.charAt(0)}
+                      </div>
+                    )}
+                  </button>
+                  {/* Dropdown menu with click toggle instead of hover */}
+                  {profileMenuOpen && (
+                    <div 
+                      className="absolute right-0 mt-2 w-48 bg-neutral-800 rounded-md shadow-lg py-1 z-10"
+                      onMouseLeave={() => {
+                        // Add a small delay before closing to make it more user-friendly
+                        setTimeout(() => setProfileMenuOpen(false), 300);
+                      }}
+                    >
+                      <div className="px-4 py-2 text-sm text-gray-200 border-b border-gray-700">
+                        <p className="font-medium">{userData.First} {userData.Last}</p>
+                        <p className="text-xs text-gray-400 truncate">{userData.email}</p>
+                      </div>
+                      <a href="/profile" className="block px-4 py-2 text-sm text-gray-200 hover:bg-gray-700">Profile</a>
+                      <a href="#" className="block px-4 py-2 text-sm text-gray-200 hover:bg-gray-700">Settings</a>
+                      <button 
+                        onClick={handleSignOut}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-gray-700"
+                      >
+                        Sign out
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </>
+            ) : (
+              /* User is not logged in - show sign in button */
+              <button
+                onClick={() => setShowOneTap(true)}
+                className="flex items-center space-x-2 bg-white text-gray-800 hover:bg-gray-100 py-1 px-3 rounded-md text-sm font-medium transition-colors"
+              >
+                <svg width="18" height="18" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+                  <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                  <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                  <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                  <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                </svg>
+                <span>Sign in with Google</span>
+              </button>
+            )}
             {showOneTap && <OneTapComponent/>}
           </div>
         </div>
