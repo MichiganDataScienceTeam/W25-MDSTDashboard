@@ -13,41 +13,52 @@ export default function MDSTDashboard() {
   // Track which project is selected; empty string = no project (show home)
   const [selectedProject, setSelectedProject] = useState("");
   const [showOneTap, setShowOneTap] = useState(false)
+  // Add state for user data
+  const [userData, setUserData] = useState(null)
+  const [loading, setLoading] = useState(true)
 
-  // Add useEffect to check session
+  // Add useEffect to check session and fetch user data
   useEffect(() => {
-    const checkSession = async () => {
+    const fetchUserData = async () => {
+      setLoading(true)
       const supabase = createClient()
       const { data: { session }, error } = await supabase.auth.getSession()
       
       if (error) {
         console.error('Error getting session:', error)
+        setLoading(false)
         return
       }
 
       if (session) {
         console.log('User is logged in')
-        console.log('Session cookie:', document.cookie)
+        
+        // Get user info from your "Users" table using uid
+        const { data: userInfo, error: userError } = await supabase
+          .from('Users')
+          .select('*')
+          .eq('uid', session.user.id)
+          .single()
+
+        if (userError) {
+          console.error('Error fetching user info:', userError)
+        } else {
+          setUserData(userInfo)
+        }
       } else {
         console.log('No active session')
       }
+      
+      setLoading(false)
     }
 
-    checkSession()
+    fetchUserData()
   }, [])
 
   // Handler for dropdown change
   const handleProjectChange = (event) => {
     setSelectedProject(event.target.value);
   };
-
-  // sign in handler
-  // async function handleSignInWithGoogle(response) {
-  //   const { data, error } = await supabase.auth.signInWithIdToken({
-  //     provider: 'google',
-  //     token: response.credential,
-  //   })
-  // }
 
   return (
     <div className="bg-neutral-900 text-gray-100 min-h-screen flex flex-col">
@@ -81,7 +92,6 @@ export default function MDSTDashboard() {
               onClick={() => setShowOneTap(true)}
               className="rounded-full w-8 h-8 overflow-hidden bg-gray-800 hover:ring-2 hover:ring-white"
               title="User Menu"
-
             >
               <img
                 src="/placeholder-user.jpg"
@@ -96,37 +106,53 @@ export default function MDSTDashboard() {
 
       {/* MAIN CONTENT */}
       <main className="max-w-7xl mx-auto w-full flex-1 px-4 sm:px-6 lg:px-8 py-8">
-        {/* DASHBOARD HEADING */}
-        <div className="mb-8 flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Dashboard</h1>
+        {/* DASHBOARD HEADING WITH USER WELCOME */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold">Dashboard</h1>
+              {loading ? (
+                <p className="text-gray-400 text-sm mt-1">Loading user information...</p>
+              ) : userData ? (
+                <p className="text-gray-300 mt-1">
+                  Welcome, {userData.First} {userData.Last}
+                  {userData.Project && userData.Role ? 
+                    ` | Project ID: ${userData.Project} | Role: ${userData.Role}` : 
+                    userData.Role ? ` | Role: ${userData.Role}` : ''}
+                </p>
+              ) : (
+                <p className="text-gray-400 text-sm mt-1">Not logged in</p>
+              )}
+            </div>
 
-          {/* PROJECT SWITCHER DROPDOWN (UPDATED: All DB project names) */}
-          <div className="flex items-center space-x-2">
-            <label htmlFor="project-switcher" className="text-sm">
-              Select Project:
-            </label>
-            <select
-              id="project-switcher"
-              value={selectedProject}
-              onChange={handleProjectChange}
-              className="bg-neutral-800 text-gray-100 p-2 rounded"
-            >
-              <option value="">Home View</option>
-              <option value="Fruit Nutrition Information App">Fruit Nutrition Information App</option>
-              <option value="Mini AlphaGo">Mini AlphaGo</option>
-              <option value="Image Style Transfer">Image Style Transfer</option>
-              <option value="Breast Cancer Detection">Breast Cancer Detection</option>
-              <option value="Minecraft Clip Summarizer">Minecraft Clip Summarizer</option>
-              <option value="Election Voting Analysis">Election Voting Analysis</option>
-              <option value="JARVIS">JARVIS</option>
-              <option value="MDST Dashboard">MDST Dashboard</option>
-              <option value="Building & Breaking a Resume Screener">Building & Breaking a Resume Screener</option>
-              <option value="Traffic Accident Prediction">Traffic Accident Prediction</option>
-              <option value="Car brand Classification">Car brand Classification</option>
-              <option value="LLM App Development">LLM App Development</option>
-              <option value="Criminal Risk Analysis">Criminal Risk Analysis</option>
-              <option value="Flight Price Prediction">Flight Price Prediction</option>
-            </select>
+            {/* PROJECT SWITCHER DROPDOWN */}
+            <div className="flex items-center space-x-2">
+              <label htmlFor="project-switcher" className="text-sm">
+                Select Project:
+              </label>
+              <select
+                id="project-switcher"
+                value={selectedProject}
+                onChange={handleProjectChange}
+                className="bg-neutral-800 text-gray-100 p-2 rounded"
+              >
+                <option value="">Home View</option>
+                <option value="Fruit Nutrition Information App">Fruit Nutrition Information App</option>
+                <option value="Mini AlphaGo">Mini AlphaGo</option>
+                <option value="Image Style Transfer">Image Style Transfer</option>
+                <option value="Breast Cancer Detection">Breast Cancer Detection</option>
+                <option value="Minecraft Clip Summarizer">Minecraft Clip Summarizer</option>
+                <option value="Election Voting Analysis">Election Voting Analysis</option>
+                <option value="JARVIS">JARVIS</option>
+                <option value="MDST Dashboard">MDST Dashboard</option>
+                <option value="Building & Breaking a Resume Screener">Building & Breaking a Resume Screener</option>
+                <option value="Traffic Accident Prediction">Traffic Accident Prediction</option>
+                <option value="Car brand Classification">Car brand Classification</option>
+                <option value="LLM App Development">LLM App Development</option>
+                <option value="Criminal Risk Analysis">Criminal Risk Analysis</option>
+                <option value="Flight Price Prediction">Flight Price Prediction</option>
+              </select>
+            </div>
           </div>
         </div>
 
