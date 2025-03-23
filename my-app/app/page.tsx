@@ -14,6 +14,28 @@ export default function MDSTDashboard() {
   const [selectedProject, setSelectedProject] = useState("");
   const [showOneTap, setShowOneTap] = useState(false)
 
+  // Add useEffect to check session
+  useEffect(() => {
+    const checkSession = async () => {
+      const supabase = createClient()
+      const { data: { session }, error } = await supabase.auth.getSession()
+      
+      if (error) {
+        console.error('Error getting session:', error)
+        return
+      }
+
+      if (session) {
+        console.log('User is logged in')
+        console.log('Session cookie:', document.cookie)
+      } else {
+        console.log('No active session')
+      }
+    }
+
+    checkSession()
+  }, [])
+
   // Handler for dropdown change
   const handleProjectChange = (event) => {
     setSelectedProject(event.target.value);
