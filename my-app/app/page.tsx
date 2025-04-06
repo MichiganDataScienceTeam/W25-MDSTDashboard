@@ -123,7 +123,9 @@ export default function MDSTDashboard() {
                 >
                   <Bell className="h-6 w-6" />
                 </button>
-                {/* Calendar toggle button */}
+
+                {/* Un comment to re add calendar toggle button  */}
+                {/* Calendar toggle button
                 <button
                   type="button"
                   className={`rounded-full p-1 transition-colors ${
@@ -133,7 +135,7 @@ export default function MDSTDashboard() {
                   onClick={() => setShowCalendar(!showCalendar)}
                 >
                   <Calendar className="h-6 w-6" />
-                </button>
+                </button> */}
                 <div className="relative">
                   <button
                     type="button"
