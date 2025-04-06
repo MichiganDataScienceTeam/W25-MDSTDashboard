@@ -7,6 +7,7 @@ import OneTapComponent from "@/components/ui/sign_in"
 import GoogleCalendarComponent from "@/components/GoogleCalendarComponent"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
+import { Button } from "@/components/ui/button";
 
 export default function MDSTDashboard() {
   // State management
@@ -313,6 +314,8 @@ function FeatureCard({ title, description, icon }) {
  * PROJECT PAGE (for logged in users)
  * ----------------------------------------------------------------*/
 function ProjectPage({ userData }) {
+
+
   const [meetingNotes, setMeetingNotes] = useState<MeetingNote[]>([
     { week: 1, content: "Initial project planning and team introductions." },
   ])
@@ -334,18 +337,102 @@ const updateMeetingNotes = (content: string) => {
     setMeetingNotes([...meetingNotes, { week, content }])
   }
 }
-  const getCurrentNotes = () => {
+  const getCurrentNotes = async () => {
     const week = Number.parseInt(selectedWeek)
-    return meetingNotes.find((note) => note.week === week)?.content || ""
+    const { data: existingNote, error: checkError } = await supabase
+    .from("Notes")
+    .select("text")
+    .eq("project", userData.Project)
+    .eq("week", week)
+    .maybeSingle()
+    
+    return existingNote.text
   }
+  const supabase = createClient()
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState(null);
   const [selectedWeek, setSelectedWeek] = useState<string>("1")
   const [projectData, setProjectData] = useState(null)
   const [attendance, setAttendance] = useState([])
   const [loading, setLoading] = useState(true)
+  const [submittingNotes, setSubmittingNotes] = useState(false)
+  const [currentNoteText, setCurrentNoteText] = useState("");
 
   const weeks = Array.from({ length: 10 }, (_, i) => i + 1)
 
+  const handleSubmitNotes = async () => {
+    if (!userData || !userData.Project) return
+    
+    setSubmittingNotes(true)
+    setError(null)
+    setResult(null)
+
+    const currentWeek = Number.parseInt(selectedWeek)
+    const noteContent = getCurrentNotes()
+
+    try {
+      // First check if a note for this week and project already exists
+      const { data: existingNote, error: checkError } = await supabase
+        .from("Notes")
+        .select("*")
+        .eq("project", userData.Project)
+        .eq("week", currentWeek)
+        .maybeSingle()
+
+      if (checkError) throw checkError
+
+      let response
+      
+      if (existingNote) {
+        // Update existing note
+        response = await supabase
+          .from("Notes")
+          .update({ 
+            text: noteContent,
+            updated_at: new Date().toISOString()
+          })
+          .eq("project", userData.Project)
+          .eq("week", currentWeek)
+      } else {
+        // Insert new note
+        response = await supabase
+          .from("MeetingNotes")
+          .insert({
+            project: userData.Project,
+            week: currentWeek,
+            text: noteContent,
+            updated_at: new Date().toISOString()
+          })
+      }
+
+      if (response.error) throw response.error
+      
+      setResult({ 
+        success: true, 
+        message: `Meeting notes for Week ${currentWeek} have been saved successfully.`
+      })
+    } catch (err) {
+      console.error("Error saving meeting notes:", err)
+      setError(err.message || "Failed to save meeting notes.")
+    } finally {
+      setSubmittingNotes(false)
+    }
+  }
+
   useEffect(() => {
+
+    const loadNotes = async () => {
+      try {
+        const notesText = await getCurrentNotes();
+        setCurrentNoteText(notesText);
+      } catch (err) {
+        console.error("Failed to load notes:", err);
+        setCurrentNoteText("");
+      }
+    };
+    
+    loadNotes();
+
     const fetchProjectData = async () => {
       if (!userData || !userData.Project) {
         setLoading(false)
@@ -454,6 +541,24 @@ const updateMeetingNotes = (content: string) => {
           <p className="text-gray-400">Project information not available.</p>
         )}
       </div>
+
+      <div>
+                <h3 className="text-lg font-semibold mb-3 text-gray-200 flex items-center gap-2">
+                  <LinkIcon className="h-5 w-5" />
+                  Project Resources
+                </h3>
+                <div className="space-y-2">
+                  <a href="https://github.com/MichiganDataScienceTeam/W25-MDSTDashboard" className="block text-blue-400 hover:text-blue-300 transition-colors">
+                    GitHub Repository
+                  </a>
+                  <a href="https://drive.google.com/drive/folders/1sPjjBTP57PBuo0R5UiaK2dD0Ypj8zmYj?usp=drive_link" className="block text-blue-400 hover:text-blue-300 transition-colors">
+                    Google Drive
+                  </a>
+                  <a href="#" className="block text-blue-400 hover:text-blue-300 transition-colors">
+                    Project Demo
+                  </a>
+                </div>
+              </div>
   
       {/* Meeting Notes */}
       <div className="p-6 bg-neutral-800 rounded-lg border border-neutral-700">
@@ -493,6 +598,21 @@ const updateMeetingNotes = (content: string) => {
               placeholder="Enter meeting notes for this week..."
               className="min-h-[200px] bg-neutral-700 border-neutral-600 text-gray-200 placeholder:text-gray-400 focus:ring-offset-neutral-800"
             />
+             <div className="space-y-4">
+             <Button onClick={handleSubmitNotes} disabled={submittingNotes} className="bg-blue-600 hover:bg-blue-700">
+                {submittingNotes ? "Saving..." : "Save Meeting Notes"}
+              </Button>
+
+      {result && (
+        <pre className="bg-neutral-800 text-green-400 p-4 rounded-lg text-sm overflow-x-auto">
+          {JSON.stringify(result, null, 2)}
+        </pre>
+      )}
+
+      {error && (
+        <p className="text-red-500">Error: {error}</p>
+      )}
+    </div>
           </div>
         </div>
       </div>
