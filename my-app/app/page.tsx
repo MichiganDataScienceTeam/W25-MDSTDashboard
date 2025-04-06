@@ -30,19 +30,6 @@ export default function MDSTDashboard() {
   // Fetch user data on component mount
   useEffect(() => {
     const fetchUserData = async () => {
-<<<<<<< HEAD
-      setLoading(true)
-      const supabase = createClient()
-      const {
-        data: { session },
-        error,
-      } = await supabase.auth.getSession()
-
-      if (error) {
-        console.error("Error getting session:", error)
-        setLoading(false)
-        return
-=======
       setLoading(true);
       const supabase = createClient();
       
@@ -52,44 +39,9 @@ export default function MDSTDashboard() {
         console.error('Error getting session:', error);
         setLoading(false);
         return;
->>>>>>> 3f5d8537e9f978414bbe312edbaae1e3f399ad2f
       }
   
       if (session) {
-<<<<<<< HEAD
-        console.log("User is logged in")
-
-        // Get user info from your "Users" table using email
-        const { data: userInfo, error: userError } = await supabase
-          .from("Users")
-          .select("*")
-          .eq("email", session.user.email)
-          .single()
-
-        if (userError) {
-          console.error("Error fetching user info:", userError)
-        } else {
-          // Get the Google photo URL from provider details if available
-          const googlePhotoURL = session.user?.user_metadata?.avatar_url || null
-
-          // Use profileUrl from database or fall back to Google photo or default
-          const profileUrl = userInfo.profileUrl || googlePhotoURL || defaultProfileImage
-
-          // Combine Supabase user data with authentication metadata
-          setUserData({
-            ...userInfo,
-            email: session.user.email,
-            photoURL: googlePhotoURL,
-            profileUrl: profileUrl,
-          })
-        }
-      } else {
-        console.log("No active session")
-      }
-
-      setLoading(false)
-    }
-=======
         console.log(session);
         console.log('User is logged in');
   
@@ -120,7 +72,6 @@ export default function MDSTDashboard() {
             projectName = projectData.project_name;
           }
         }
->>>>>>> 3f5d8537e9f978414bbe312edbaae1e3f399ad2f
 
         console.log(projectName)
         const googlePhotoURL = session.user?.user_metadata?.avatar_url || null;
@@ -270,17 +221,9 @@ export default function MDSTDashboard() {
               ) : userData ? (
                 <p className="text-gray-300 mt-1">
                   Welcome, {userData.First} {userData.Last}
-<<<<<<< HEAD
-                  {userData.Project && userData.Role
-                    ? ` | Project ID: ${userData.Project} | Role: ${userData.Role}`
-                    : userData.Role
-                      ? ` | Role: ${userData.Role}`
-                      : ""}
-=======
                   {userData.Project && userData.Role ? 
                     ` | Project Name: ${userData.projectName} | Role: ${userData.Role}` : 
                     userData.Role ? ` | Role: ${userData.Role}` : ''}
->>>>>>> 3f5d8537e9f978414bbe312edbaae1e3f399ad2f
                 </p>
               ) : (
                 <p className="text-gray-400 text-sm mt-1">Not logged in</p>
