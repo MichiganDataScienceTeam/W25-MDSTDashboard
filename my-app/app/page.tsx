@@ -346,9 +346,10 @@ const updateMeetingNotes = (content: string) => {
     .eq("week", week)
     .maybeSingle()
     
-    return existingNote.text
+    return existingNote ? existingNote.text : "";
   }
   const supabase = createClient()
+  const [notesLoading, setNotesLoading] = useState(false)
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
   const [selectedWeek, setSelectedWeek] = useState<string>("1")
@@ -388,7 +389,7 @@ const updateMeetingNotes = (content: string) => {
         response = await supabase
           .from("Notes")
           .update({ 
-            text: noteContent,
+            text: currentNoteText,
             updated_at: new Date().toISOString()
           })
           .eq("project", userData.Project)
@@ -400,7 +401,7 @@ const updateMeetingNotes = (content: string) => {
           .insert({
             project: userData.Project,
             week: currentWeek,
-            text: noteContent,
+            text: currentNoteText,
             updated_at: new Date().toISOString()
           })
       }
@@ -421,17 +422,36 @@ const updateMeetingNotes = (content: string) => {
 
   useEffect(() => {
 
-    const loadNotes = async () => {
+    const loadNotesForSelectedWeek = async () => {
+      setNotesLoading(true)
       try {
-        const notesText = await getCurrentNotes();
-        setCurrentNoteText(notesText);
+        const week = Number.parseInt(selectedWeek)
+        
+        // Query notes for this specific project and week
+        const { data: existingNote, error: checkError } = await supabase
+          .from("Notes")
+          .select("text")
+          .eq("project", userData.Project)
+          .eq("week", week)
+          .maybeSingle()
+        
+        if (checkError) {
+          console.error("Error fetching notes:", checkError)
+          setCurrentNoteText("")
+        } else {
+          // If we found notes for this week, set them. Otherwise, empty string
+          setCurrentNoteText(existingNote ? existingNote.text : "")
+          console.log(`Loaded notes for week ${week}:`, existingNote ? existingNote.text : "No notes found")
+        }
       } catch (err) {
-        console.error("Failed to load notes:", err);
-        setCurrentNoteText("");
+        console.error("Failed to load notes for week:", err)
+        setCurrentNoteText("")
+      } finally {
+        setNotesLoading(false)
       }
-    };
+    }
     
-    loadNotes();
+    loadNotesForSelectedWeek();
 
     const fetchProjectData = async () => {
       if (!userData || !userData.Project) {
@@ -491,7 +511,11 @@ const updateMeetingNotes = (content: string) => {
     }
 
     fetchProjectData()
-  }, [userData])
+  }, [selectedWeek, userData])
+
+  const handleNoteChange = (e) => {
+    setCurrentNoteText(e.target.value)
+  }
 
   if (loading) {
     return <div className="text-center py-10">Loading project information...</div>
@@ -593,8 +617,8 @@ const updateMeetingNotes = (content: string) => {
           <div className="space-y-2">
             <h3 className="text-lg font-semibold text-gray-200">Meeting Notes</h3>
             <Textarea
-              value={getCurrentNotes()}
-              onChange={(e) => updateMeetingNotes(e.target.value)}
+              value={currentNoteText}
+              onChange={handleNoteChange}
               placeholder="Enter meeting notes for this week..."
               className="min-h-[200px] bg-neutral-700 border-neutral-600 text-gray-200 placeholder:text-gray-400 focus:ring-offset-neutral-800"
             />
