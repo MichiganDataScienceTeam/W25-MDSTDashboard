@@ -1,11 +1,12 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Bell, Calendar, Layout, Users, Settings } from "lucide-react"
+import { FileText, LinkIcon, Check, X, Bell, Calendar, Layout, Users, Settings } from "lucide-react"
 import { createClient } from "@/utils/supabase/client"
-
 import OneTapComponent from "@/components/ui/sign_in"
 import GoogleCalendarComponent from "@/components/GoogleCalendarComponent"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
 
 export default function MDSTDashboard() {
   // State management
@@ -13,6 +14,7 @@ export default function MDSTDashboard() {
   const [userData, setUserData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
+
 
   // Default profile image
   const defaultProfileImage =
@@ -311,10 +313,37 @@ function FeatureCard({ title, description, icon }) {
  * PROJECT PAGE (for logged in users)
  * ----------------------------------------------------------------*/
 function ProjectPage({ userData }) {
+  const [meetingNotes, setMeetingNotes] = useState<MeetingNote[]>([
+    { week: 1, content: "Initial project planning and team introductions." },
+  ])
+
+interface MeetingNote {
+  week: number
+  content: string
+}
+
+const updateMeetingNotes = (content: string) => {
+  const week = Number.parseInt(selectedWeek)
+  const existingNoteIndex = meetingNotes.findIndex((note) => note.week === week)
+
+  if (existingNoteIndex !== -1) {
+    const updatedNotes = [...meetingNotes]
+    updatedNotes[existingNoteIndex].content = content
+    setMeetingNotes(updatedNotes)
+  } else {
+    setMeetingNotes([...meetingNotes, { week, content }])
+  }
+}
+  const getCurrentNotes = () => {
+    const week = Number.parseInt(selectedWeek)
+    return meetingNotes.find((note) => note.week === week)?.content || ""
+  }
+  const [selectedWeek, setSelectedWeek] = useState<string>("1")
   const [projectData, setProjectData] = useState(null)
-  const [meetingNotes, setMeetingNotes] = useState([])
   const [attendance, setAttendance] = useState([])
   const [loading, setLoading] = useState(true)
+
+  const weeks = Array.from({ length: 10 }, (_, i) => i + 1)
 
   useEffect(() => {
     const fetchProjectData = async () => {
@@ -338,34 +367,34 @@ function ProjectPage({ userData }) {
         setProjectData(project)
 
         // Fetch meeting notes for this project
-        const { data: notes, error: notesError } = await supabase
-          .from("MeetingNotes")
-          .select("*")
-          .eq("project_id", userData.Project)
+        // const { data: notes, error: notesError } = await supabase
+        //   .from("MeetingNotes")
+        //   .select("*")
+        //   .eq("project_id", userData.Project)
 
-        if (notesError) throw notesError
-        setMeetingNotes(notes || [])
+        // if (notesError) throw notesError
+        // setMeetingNotes(notes || [])
 
         // Fetch attendance based on role
         if (userData.Role === "Lead") {
           // For leads, fetch attendance for all team members
-          const { data: allAttendance, error: attendanceError } = await supabase
-            .from("Attendance")
-            .select("*")
-            .eq("project_id", userData.Project)
+          // const { data: allAttendance, error: attendanceError } = await supabase
+          //   .from("Attendance")
+          //   .select("*")
+          //   .eq("project_id", userData.Project)
 
-          if (attendanceError) throw attendanceError
-          setAttendance(allAttendance || [])
+          // if (attendanceError) throw attendanceError
+          // setAttendance(allAttendance || [])
         } else {
           // For regular members, fetch only their own attendance
-          const { data: memberAttendance, error: attendanceError } = await supabase
-            .from("Attendance")
-            .select("*")
-            .eq("project_id", userData.Project)
-            .eq("email", userData.email)
+          // const { data: memberAttendance, error: attendanceError } = await supabase
+          //   .from("Attendance")
+          //   .select("*")
+          //   .eq("project_id", userData.Project)
+          //   .eq("email", userData.email)
 
-          if (attendanceError) throw attendanceError
-          setAttendance(memberAttendance || [])
+          // if (attendanceError) throw attendanceError
+          // setAttendance(memberAttendance || [])
         }
       } catch (error) {
         console.error("Error fetching project data:", error)
@@ -425,27 +454,49 @@ function ProjectPage({ userData }) {
           <p className="text-gray-400">Project information not available.</p>
         )}
       </div>
-
+  
       {/* Meeting Notes */}
       <div className="p-6 bg-neutral-800 rounded-lg border border-neutral-700">
-        <h2 className="text-xl font-bold mb-4">Meeting Notes</h2>
-        {meetingNotes.length > 0 ? (
-          <div className="space-y-4">
-            {meetingNotes.map((note, index) => (
-              <div key={index} className="p-4 bg-neutral-700 rounded-lg">
-                <div className="flex justify-between items-center mb-2">
-                  <h3 className="font-semibold">{note.meeting_date}</h3>
-                  <span className="text-sm text-gray-400">{note.created_by}</span>
-                </div>
-                <p className="text-gray-300">{note.content}</p>
-              </div>
-            ))}
+        <h2 className="text-xl font-semibold mb-6 text-white flex items-center gap-2">
+          <FileText className="h-5 w-5" />
+          Meeting Notes & Attendance
+        </h2>
+  
+        <div className="space-y-8">
+          {/* Week Selector */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-300">Select Week</label>
+            <Select value={selectedWeek} onValueChange={setSelectedWeek}>
+              <SelectTrigger className="w-[180px] bg-neutral-700 border-neutral-600 text-gray-200">
+                <SelectValue placeholder="Select week" />
+              </SelectTrigger>
+              <SelectContent className="bg-neutral-800 border-neutral-700">
+                {weeks.map((week) => (
+                  <SelectItem
+                    key={week}
+                    value={week.toString()}
+                    className="text-gray-200 focus:bg-neutral-700 focus:text-gray-200"
+                  >
+                    Week {week}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-        ) : (
-          <p className="text-gray-400">No meeting notes available for this project.</p>
-        )}
+  
+          {/* Meeting Notes */}
+          <div className="space-y-2">
+            <h3 className="text-lg font-semibold text-gray-200">Meeting Notes</h3>
+            <Textarea
+              value={getCurrentNotes()}
+              onChange={(e) => updateMeetingNotes(e.target.value)}
+              placeholder="Enter meeting notes for this week..."
+              className="min-h-[200px] bg-neutral-700 border-neutral-600 text-gray-200 placeholder:text-gray-400 focus:ring-offset-neutral-800"
+            />
+          </div>
+        </div>
       </div>
-
+  
       {/* Attendance */}
       <div className="p-6 bg-neutral-800 rounded-lg border border-neutral-700">
         <h2 className="text-xl font-bold mb-4">{userData.Role === "Lead" ? "Team Attendance" : "Your Attendance"}</h2>
@@ -471,8 +522,8 @@ function ProjectPage({ userData }) {
                           record.status === "Present"
                             ? "bg-green-800 text-green-200"
                             : record.status === "Excused"
-                              ? "bg-yellow-800 text-yellow-200"
-                              : "bg-red-800 text-red-200"
+                            ? "bg-yellow-800 text-yellow-200"
+                            : "bg-red-800 text-red-200"
                         }`}
                       >
                         {record.status}
@@ -488,14 +539,14 @@ function ProjectPage({ userData }) {
           <p className="text-gray-400">No attendance records available.</p>
         )}
       </div>
-
+  
       {/* Google Calendar Component */}
       <div className="mt-8">
         <GoogleCalendarComponent />
       </div>
     </div>
   )
-}
+  
 
 /* ------------------------------------------------------------------
  * STAT CARD
@@ -511,4 +562,4 @@ function StatCard({ title, value, icon }) {
     </div>
   )
 }
-
+}
