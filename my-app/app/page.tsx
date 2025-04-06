@@ -37,53 +37,70 @@ export default function MDSTDashboard() {
   // Add useEffect to check session and fetch user data
   useEffect(() => {
     const fetchUserData = async () => {
-      setLoading(true)
-      const supabase = createClient()
-      const { data: { session }, error } = await supabase.auth.getSession()
+      setLoading(true);
+      const supabase = createClient();
+      
+      const { data: { session }, error } = await supabase.auth.getSession();
       
       if (error) {
-        console.error('Error getting session:', error)
-        setLoading(false)
-        return
+        console.error('Error getting session:', error);
+        setLoading(false);
+        return;
       }
-
+  
       if (session) {
-        console.log(session)
-        console.log('User is logged in')
-        
-        // Get user info from your "Users" table using uid
+        console.log(session);
+        console.log('User is logged in');
+  
         const { data: userInfo, error: userError } = await supabase
           .from('Users')
           .select('*')
           .eq('email', session.user.email)
-          .single()
-
+          .single();
+  
         if (userError) {
-          console.error('Error fetching user info:', userError)
-        } else {
-          // Get the Google photo URL from provider details if available
-          const googlePhotoURL = session.user?.user_metadata?.avatar_url || null
-          
-          // Use profileUrl from database or fall back to Google photo or default
-          const profileUrl = userInfo.profileUrl || googlePhotoURL || defaultProfileImage
-          
-          // Combine Supabase user data with authentication metadata
-          setUserData({
-            ...userInfo,
-            email: session.user.email,
-            photoURL: googlePhotoURL,
-            profileUrl: profileUrl
-          })
+          console.error('Error fetching user info:', userError);
+          setLoading(false);
+          return;
         }
-      } else {
-        console.log('No active session')
-      }
-      
-      setLoading(false)
-    }
+  
+        // Fetch the project name using the project ID from the userInfo
+        let projectName = null;
+        if (userInfo?.Project) {
+          const { data: projectData, error: projectError } = await supabase
+            .from('Projects')
+            .select('project_name')
+            .eq('id', userInfo.Project)
+            .single();
+  
+          if (projectError) {
+            console.error('Error fetching project name:', projectError);
+          } else {
+            projectName = projectData.project_name;
+          }
+        }
 
-    fetchUserData()
-  }, [])
+        console.log(projectName)
+        const googlePhotoURL = session.user?.user_metadata?.avatar_url || null;
+        const profileUrl = userInfo.profileUrl || googlePhotoURL || defaultProfileImage;
+  
+        setUserData({
+          ...userInfo,
+          email: session.user.email,
+          photoURL: googlePhotoURL,
+          profileUrl: profileUrl,
+          projectName: projectName // <-- add project name to userData
+        });
+      } else {
+        console.log('No active session');
+      }
+  
+      setLoading(false);
+    };
+  
+    fetchUserData();
+  }, []);
+  
 
   // Handler for dropdown change
   const handleProjectChange = (event) => {
@@ -218,7 +235,7 @@ export default function MDSTDashboard() {
                 <p className="text-gray-300 mt-1">
                   Welcome, {userData.First} {userData.Last}
                   {userData.Project && userData.Role ? 
-                    ` | Project ID: ${userData.Project} | Role: ${userData.Role}` : 
+                    ` | Project Name: ${userData.projectName} | Role: ${userData.Role}` : 
                     userData.Role ? ` | Role: ${userData.Role}` : ''}
                 </p>
               ) : (
