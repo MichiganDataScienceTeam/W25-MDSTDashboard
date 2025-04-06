@@ -35,11 +35,11 @@ const OneTapComponent = () => {
       if (error) {
         console.error('Error getting session', error)
       }
-      if (data.session) {
-        console.log('User already has a session')
-        router.push('/')
-        return
-      }
+      // if (data.session) {
+      //   console.log('User already has a session')
+      //   router.push('/')
+      //   return
+      // }
 
       const [nonce, hashedNonce] = await generateNonce()
       console.log('Nonce generated')

@@ -40,7 +40,7 @@ export default function ProfilePage() {
         const { data: userInfo, error: userError } = await supabase
           .from('Users')
           .select('*')
-          .eq('uid', session.user.id)
+          .eq('email', session.user.email)
           .single();
 
         if (userError) {
@@ -110,7 +110,7 @@ export default function ProfilePage() {
           profileUrl: formData.profileUrl,
           Role: formData.Role
         })
-        .eq('uid', userData.uid)
+        .eq('email', userData.email)
         .select();
       
       if (error) {
@@ -123,7 +123,7 @@ export default function ProfilePage() {
       const { data: updatedUser, error: fetchError } = await supabase
         .from('Users')
         .select('*')
-        .eq('uid', userData.uid)
+        .eq('email', userData.email)
         .single();
         
       if (fetchError) {

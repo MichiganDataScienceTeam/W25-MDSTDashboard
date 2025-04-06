@@ -44,13 +44,14 @@ export default function MDSTDashboard() {
       }
 
       if (session) {
+        console.log(session)
         console.log('User is logged in')
         
         // Get user info from your "Users" table using uid
         const { data: userInfo, error: userError } = await supabase
           .from('Users')
           .select('*')
-          .eq('uid', session.user.id)
+          .eq('email', session.user.email)
           .single()
 
         if (userError) {
