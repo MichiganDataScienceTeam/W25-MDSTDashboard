@@ -6,6 +6,7 @@ import { createClient } from "@/utils/supabase/client";
 
 import ProjectView from "./project-view";
 import OneTapComponent from "@/components/ui/sign_in";
+import GoogleCalendarComponent from "@/components/GoogleCalendarComponent";
 
 export default function MDSTDashboard() {
   const [activeTab, setActiveTab] = useState("member")
@@ -17,6 +18,9 @@ export default function MDSTDashboard() {
   const [userData, setUserData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
+  
+  // Add calendar state
+  const [showCalendar, setShowCalendar] = useState(false)
   
   // Default profile image
   const defaultProfileImage = "https://media.istockphoto.com/id/1495088043/vector/user-profile-icon-avatar-or-person-icon-profile-picture-portrait-symbol-default-portrait.jpg?s=612x612&w=0&k=20&c=dhV2p1JwmloBTOaGAtaA3AW1KSnjsdMt7-U_3EZElZ0=";
@@ -118,6 +122,17 @@ export default function MDSTDashboard() {
                   title="Notifications"
                 >
                   <Bell className="h-6 w-6" />
+                </button>
+                {/* Calendar toggle button */}
+                <button
+                  type="button"
+                  className={`rounded-full p-1 transition-colors ${
+                    showCalendar ? "text-white bg-indigo-600" : "text-gray-200 hover:text-white"
+                  }`}
+                  title="Calendar"
+                  onClick={() => setShowCalendar(!showCalendar)}
+                >
+                  <Calendar className="h-6 w-6" />
                 </button>
                 <div className="relative">
                   <button
@@ -280,6 +295,10 @@ export default function MDSTDashboard() {
           </>
         ) : (
           <ProjectView selectedProject={selectedProject} />
+        )}
+        {/* GOOGLE CALENDAR SECTION */}
+                {(
+          <GoogleCalendarComponent />
         )}
       </main>
     </div>
