@@ -6,13 +6,23 @@ import { useEffect, useState } from 'react';
 import { Loader } from 'lucide-react';
 
 export default function ProfileRoute() {
-  const [isAuthenticated, setIsAuthenticated] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
-      const supabase = createClient();
-      const { data: { session } } = await supabase.auth.getSession();
-      setIsAuthenticated(!!session);
+      try {
+        const supabase = createClient();
+        const { data, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error('Error checking authentication:', error);
+          setIsAuthenticated(false);
+          return;
+        }
+        setIsAuthenticated(!!data.session);
+      } catch (error) {
+        console.error('Unexpected error during auth check:', error);
+        setIsAuthenticated(false);
+      }
     };
 
     checkAuth();

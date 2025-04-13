@@ -9,10 +9,23 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button";
 
+// Define a proper type for user data
+interface UserData {
+  First?: string;
+  Last?: string;
+  email?: string;
+  profileUrl?: string;
+  photoURL?: string;
+  Project?: string;
+  Role?: string;
+  projectName?: string;
+  [key: string]: any; // For any other properties
+}
+
 export default function MDSTDashboard() {
   // State management
   const [showOneTap, setShowOneTap] = useState(false)
-  const [userData, setUserData] = useState(null)
+  const [userData, setUserData] = useState<UserData | null>(null)
   const [loading, setLoading] = useState(true)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
 

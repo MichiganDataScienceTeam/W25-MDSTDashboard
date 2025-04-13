@@ -1,0 +1,15 @@
+{
+  "buildCommand": "next build",
+  "installCommand": "npm install",
+  "framework": "nextjs",
+  "devCommand": "next dev",
+  "outputDirectory": ".next",
+  "routes": [
+    { "src": "/auth/callback", "dest": "/auth/callback" }
+  ],
+  "env": {
+    "NEXT_PUBLIC_SUPABASE_URL": "${NEXT_PUBLIC_SUPABASE_URL}",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "${NEXT_PUBLIC_SUPABASE_ANON_KEY}",
+    "NEXT_PUBLIC_GOOGLE_CLIENT_ID": "${NEXT_PUBLIC_GOOGLE_CLIENT_ID}"
+  }
+} 

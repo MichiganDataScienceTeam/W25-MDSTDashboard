@@ -28,7 +28,7 @@ const OneTapComponent = () => {
       console.log('Manual Google Sign-In triggered')
       
       // Redirect to Supabase OAuth endpoint for Google
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/`,
@@ -75,7 +75,7 @@ const OneTapComponent = () => {
     return () => {
       initialized.current = false
     }
-  }, [router])
+  }, [router, handleGoogleSignIn, supabase.auth])
 
   return (
     <div className="absolute right-0 top-16 mt-2 w-96 bg-neutral-800 shadow-xl rounded-md p-4 z-50">
