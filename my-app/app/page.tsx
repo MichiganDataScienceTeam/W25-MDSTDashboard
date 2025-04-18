@@ -8,6 +8,7 @@ import GoogleCalendarComponent from "@/components/GoogleCalendarComponent"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox"
 
 // Define a proper type for user data
 interface UserData {
@@ -327,6 +328,7 @@ function FeatureCard({ title, description, icon }) {
  * PROJECT PAGE (for logged in users)
  * ----------------------------------------------------------------*/
 function ProjectPage({ userData }) {
+  const [members, setMembers] = useState([])
 
 
   const [meetingNotes, setMeetingNotes] = useState<MeetingNote[]>([
@@ -463,7 +465,97 @@ const updateMeetingNotes = (content: string) => {
         setNotesLoading(false)
       }
     }
-    
+
+    async function fetchAttendanceData(role, userId, teamId) {
+      if (role === "Lead") {
+        // Fetch team members and their attendance
+        const { data: teamMembers } = await supabase.from("Users").select("id, First, Last, email").eq("Project", teamId)
+  
+        if (teamMembers) {
+          const membersWithAttendance = await Promise.all(
+            teamMembers.map(async (member) => {
+              const { data: attendanceData } = await supabase
+                .from("Attendance")
+                .select("*")
+                .eq("User", member.id)
+                .eq("Week", Number.parseInt(selectedWeek))
+                .single()
+  
+              return {
+                id: member.id,
+                name: member.First + " " + member.Last,
+                email: member.email,
+                attendance: {
+                  [selectedWeek]: attendanceData?.is_present || false,
+                },
+              }
+            }),
+          )
+  
+          setMembers(membersWithAttendance)
+        }
+      } else {
+        // Fetch only current user's attendance
+        const { data: attendanceData } = await supabase
+          .from("Attendance")
+          .select("*")
+          .eq("User", userId)
+          .eq("Week", Number.parseInt(selectedWeek))
+          .single()
+  
+        setMembers([
+          {
+            id: userId,
+            name: userData.First + " " + userData.Last,
+            email: userData.email,
+            attendance: {
+              [selectedWeek]: attendanceData?.is_present || false,
+            },
+          },
+        ])
+      }
+    }
+
+    async function toggleAttendance(memberId, week) {
+      const memberIndex = members.findIndex((m) => m.id === memberId)
+      if (memberIndex === -1) return
+  
+      const currentStatus = members[memberIndex].attendance[week] || false
+      const newStatus = !currentStatus
+  
+      // Optimistically update UI
+      const updatedMembers = [...members]
+      updatedMembers[memberIndex] = {
+        ...updatedMembers[memberIndex],
+        attendance: {
+          ...updatedMembers[memberIndex].attendance,
+          [week]: newStatus,
+        },
+      }
+      setMembers(updatedMembers)
+  
+      // Update in database
+      const { data: existingRecord } = await supabase
+      .from("Attendance")
+      .select("*")
+      .eq("User", userData.id)
+      .eq("week", week)
+      .single()
+
+    if (existingRecord) {
+      // Update existing record
+      const { error } = await supabase
+        .from("Attendance")
+        .update({"Attended": !existingRecord.Attended})
+        .eq("User", userData.id)
+        .eq("week", week)
+
+      if (error) {
+        console.error("Error updating attendance:", error)
+        throw new Error("Failed to update attendance")
+      }
+    } 
+  }
     loadNotesForSelectedWeek();
 
     const fetchProjectData = async () => {
@@ -524,6 +616,7 @@ const updateMeetingNotes = (content: string) => {
     }
 
     fetchProjectData()
+    fetchAttendanceData(userData.Role, userData.id, userData.Project)
   }, [selectedWeek, userData])
 
   const handleNoteChange = (e) => {
@@ -656,46 +749,65 @@ const updateMeetingNotes = (content: string) => {
   
       {/* Attendance */}
       <div className="p-6 bg-neutral-800 rounded-lg border border-neutral-700">
-        <h2 className="text-xl font-bold mb-4">{userData.Role === "Lead" ? "Team Attendance" : "Your Attendance"}</h2>
-        {attendance.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="min-w-full">
-              <thead>
-                <tr className="border-b border-neutral-700 text-sm text-gray-400">
-                  <th className="py-2 px-4 text-left font-medium">Date</th>
-                  {userData.Role === "Lead" && <th className="py-2 px-4 text-left font-medium">Member</th>}
-                  <th className="py-2 px-4 text-left font-medium">Status</th>
-                  <th className="py-2 px-4 text-left font-medium">Notes</th>
+      <h2 className="text-xl font-bold mb-4">{userData.Role === "Lead" ? "Team Attendance" : "Your Attendance"}</h2>
+
+      <div className="space-y-2">
+        <h3 className="text-lg font-semibold mb-3 text-gray-200">Attendance</h3>
+        <div className="overflow-x-auto">
+          <table className="min-w-full">
+            <thead>
+              <tr className="border-b border-neutral-700 text-sm text-gray-400">
+                <th className="py-2 px-4 text-left font-medium">Member</th>
+                <th className="py-2 px-4 text-left font-medium">Status</th>
+                <th className="py-2 px-4 text-left font-medium">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {members.length > 0 ? (
+                members.map((member) => {
+                  const attending = member.attendance[Number(selectedWeek)] || false
+                  return (
+                    <tr
+                      key={member.id}
+                      className="border-b border-neutral-700 hover:bg-neutral-700/50 transition-colors"
+                    >
+                      <td className="py-2 px-4 text-gray-200">{member.name}</td>
+                      <td className="py-2 px-4">
+                        {attending ? (
+                          <span className="text-green-500 flex items-center gap-1">
+                            <Check className="h-4 w-4" /> Attending
+                          </span>
+                        ) : (
+                          <span className="text-red-500 flex items-center gap-1">
+                            <X className="h-4 w-4" /> Not Attending
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-2 px-4">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            checked={attending}
+                            onCheckedChange={() => toggleAttendance(member.id, Number(selectedWeek))}
+                            className="border-neutral-600"
+                          />
+                          <span className="text-sm text-gray-400">Mark as attending</span>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })
+              ) : (
+                <tr>
+                  <td colSpan={3} className="py-4 px-4 text-center text-gray-400">
+                    No attendance records available.
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {attendance.map((record, idx) => (
-                  <tr key={idx} className="border-b border-neutral-800 hover:bg-neutral-700/50 transition-colors">
-                    <td className="py-2 px-4">{record.meeting_date}</td>
-                    {userData.Role === "Lead" && <td className="py-2 px-4">{record.member_name || record.email}</td>}
-                    <td className="py-2 px-4">
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs ${
-                          record.status === "Present"
-                            ? "bg-green-800 text-green-200"
-                            : record.status === "Excused"
-                            ? "bg-yellow-800 text-yellow-200"
-                            : "bg-red-800 text-red-200"
-                        }`}
-                      >
-                        {record.status}
-                      </span>
-                    </td>
-                    <td className="py-2 px-4 text-gray-400">{record.notes || "-"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <p className="text-gray-400">No attendance records available.</p>
-        )}
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
+    </div>
   
       {/* Google Calendar Component */}
       <div className="mt-8">
